@@ -25,12 +25,16 @@ constant FREQ_7SEG : integer := 400;
 constant FREQ_7SEG_CNT_MAX : integer := CLK_FREQ/FREQ_7SEG/2 - 1;
 constant FREQ_ENCODER : integer := 5000;
 constant FREQ_ENCODER_CNT_MAX : integer := CLK_FREQ/FREQ_ENCODER/2 - 1;
+constant FREQ_COUNTER : integer := 250;
+constant FREQ_COUNTER_CNT_MAX : integer := CLK_FREQ/FREQ_COUNTER/2 - 1;
 
 signal FREQ_7SEG_CNT : unsigned(24 downto 0);
 signal FREQ_ENCODER_CNT : unsigned(24 downto 0);
+signal FREQ_COUNTER_CNT : unsigned(24 downto 0);
 
 signal FREQ_7SEG_SIGNAL : Std_Logic;
 signal FREQ_ENCODER_SIGNAL : Std_Logic;
+signal FREQ_COUNTER_SIGNAL : Std_Logic;
 
 signal disp_7seg_counter : Std_Logic_Vector(15 downto 0) := x"0000";
 signal disp_7seg_digit : Std_Logic_Vector(3 downto 0);
@@ -64,6 +68,21 @@ begin
 			FREQ_ENCODER_CNT <= FREQ_ENCODER_CNT + 1;
       end if;
 	end if; 
+end process;
+
+process (clk,reset)
+begin
+	if (reset='0') then
+		FREQ_COUNTER_CNT <= (others => '0');
+		FREQ_COUNTER_SIGNAL <= '0';
+	elsif (clk='1' and clk'event) then
+		if FREQ_COUNTER_CNT = FREQ_COUNTER_CNT_MAX then
+			FREQ_COUNTER_CNT <= (others => '0');
+			FREQ_COUNTER_SIGNAL <= not FREQ_COUNTER_SIGNAL;
+		else
+			FREQ_COUNTER_CNT <= FREQ_COUNTER_CNT + 1;
+		end if;
+	end if;
 end process;
 
 process(state,switch)
@@ -130,6 +149,15 @@ process(FREQ_7SEG_SIGNAL)
 begin
 	if (FREQ_7SEG_SIGNAL='1' and FREQ_7SEG_SIGNAL'event) then
 		digit <= digit + 1;
+	end if;
+end process;
+
+process(FREQ_COUNTER_SIGNAL,reset)
+begin
+	if (reset='0') then
+		disp_7seg_counter <= (others => '0');
+	elsif (FREQ_COUNTER_SIGNAL='0' and FREQ_COUNTER_SIGNAL'event) then
+		disp_7seg_counter <= disp_7seg_counter + '1';
 	end if;
 end process;
 
