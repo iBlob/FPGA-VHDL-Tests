@@ -166,11 +166,11 @@ disp_7seg_digit <= disp_7seg_counter(15 downto 12) when digit = 0 else
                    disp_7seg_counter( 7 downto  4) when digit = 2 else
                    disp_7seg_counter( 3 downto  0);
 
-disp7seg_dig <= "0111" when digit = 0 and (not disp_7seg_counter(15 downto 12) = "0000" or reset = '0') else
+disp7seg_dig <= "0111" when digit = 0 and ((not (disp_7seg_counter(15 downto 12) = "0000")) or (reset = '0')) else
                 "1111" when digit = 0 else
-                "1011" when digit = 1 and (not disp_7seg_counter(15 downto  8) = "00000000" or reset = '0') else
+                "1011" when digit = 1 and ((not (disp_7seg_counter(15 downto  8) = "00000000")) or (reset = '0')) else
                 "1111" when digit = 1 else
-                "1101" when digit = 2 and (not disp_7seg_counter(15 downto  4) = "000000000000" or reset = '0') else
+                "1101" when digit = 2 and ((not (disp_7seg_counter(15 downto  4) = "000000000000")) or (reset = '0')) else
                 "1111" when digit = 2 else
                 "1110";
 
