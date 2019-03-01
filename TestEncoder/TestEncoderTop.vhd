@@ -32,7 +32,7 @@ signal FREQ_ENCODER_CNT : unsigned(24 downto 0);
 signal FREQ_7SEG_SIGNAL : Std_Logic;
 signal FREQ_ENCODER_SIGNAL : Std_Logic;
 
-signal disp_7seg_counter : Std_Logic_Vector(15 downto 0) := x"1337";
+signal disp_7seg_counter : Std_Logic_Vector(15 downto 0) := x"abcd";
 signal disp_7seg_digit : Std_Logic_Vector(3 downto 0);
 
 signal digit : unsigned(1 downto 0);
@@ -145,10 +145,24 @@ disp7seg_dig <= "0111" when digit = 0 else
 					 "1101" when digit = 2 else
 					 "1110";
 
-disp7seg_seg <= "11111101" when reset = '0' else
-                "11111100" when digit = 0 else
-                "00001101" when digit = 1 else
-					 "00001101" when digit = 2 else
-					 "00011111";
+disp7seg_seg(7) <= '1';
+disp7seg_seg(0 to 6) <= "1111110" when reset = '0' else
+                        "0000001" when disp_7seg_digit = "0000" else -- "0"     
+                        "1001111" when disp_7seg_digit = "0001" else -- "1" 
+                        "0010010" when disp_7seg_digit = "0010" else -- "2" 
+                        "0000110" when disp_7seg_digit = "0011" else -- "3" 
+                        "1001100" when disp_7seg_digit = "0100" else -- "4" 
+                        "0100100" when disp_7seg_digit = "0101" else -- "5" 
+                        "0100000" when disp_7seg_digit = "0110" else -- "6" 
+                        "0001111" when disp_7seg_digit = "0111" else -- "7" 
+                        "0000000" when disp_7seg_digit = "1000" else -- "8"     
+                        "0000100" when disp_7seg_digit = "1001" else -- "9" 
+                        "0001000" when disp_7seg_digit = "1010" else -- a
+                        "1100000" when disp_7seg_digit = "1011" else -- b
+								"0110001" when disp_7seg_digit = "1100" else -- C
+                        "1000010" when disp_7seg_digit = "1101" else -- d
+                        "0110000" when disp_7seg_digit = "1110" else -- E
+                        "0111000" when disp_7seg_digit = "1111" else -- F
+								"0110110";
 
 end Behavioral;
