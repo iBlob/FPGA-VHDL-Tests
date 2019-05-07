@@ -6,40 +6,50 @@ use IEEE.numeric_std.all;
 
 entity TestEncoderTop is
 port(
-    led:    out Std_Logic_Vector(0 to 3) := "1111";
-    switch: in  Std_Logic_Vector(0 to 1);
-	 disp7seg_dig: out Std_Logic_Vector(3 downto 0) := "1111";
-	 disp7seg_seg: out Std_Logic_Vector(0 to 7) := "11111111";
-	 clk: in Std_Logic;
-	 reset: in Std_Logic
-	 );
+	led:    out Std_Logic_Vector(0 to 3) := "1111";
+	switch: in  Std_Logic_Vector(0 to 1);
+	disp7seg_dig: out Std_Logic_Vector(3 downto 0) := "1111";
+	disp7seg_seg: out Std_Logic_Vector(0 to 7) := "11111111";
+	clk: in Std_Logic;
+	reset: in Std_Logic
+);
 end TestEncoderTop;
 
 architecture Behavioral of TestEncoderTop is
 
 TYPE State_type IS (Idle, Left1, Left2, Left3, Right1, Right2, Right3);  -- Define the states
 SIGNAL state : State_Type := Idle;    -- Create a signal that uses the different states
+SIGNAL state_old : State_Type := Idle;    -- Create a signal that uses the different states
+SIGNAL state_new : State_Type := Idle;    -- Create a signal that uses the different states
 
-constant CLK_FREQ : integer := 50000000;
-constant FREQ_7SEG : integer := 400;
-constant FREQ_7SEG_CNT_MAX : integer := CLK_FREQ/FREQ_7SEG/2 - 1;
-constant FREQ_ENCODER : integer := 5000;
+constant CLK_FREQ             : integer := 50000000;
+
+constant FREQ_7SEG            : integer := 400;
+constant FREQ_7SEG_CNT_MAX    : integer := CLK_FREQ/FREQ_7SEG/2 - 1;
+
+constant FREQ_ENCODER         : integer := 50000;
 constant FREQ_ENCODER_CNT_MAX : integer := CLK_FREQ/FREQ_ENCODER/2 - 1;
-constant FREQ_COUNTER : integer := 250;
+
+constant FREQ_COUNTER         : integer := 250;
 constant FREQ_COUNTER_CNT_MAX : integer := CLK_FREQ/FREQ_COUNTER/2 - 1;
 
-signal FREQ_7SEG_CNT : unsigned(24 downto 0);
-signal FREQ_ENCODER_CNT : unsigned(24 downto 0);
-signal FREQ_COUNTER_CNT : unsigned(24 downto 0);
+signal FREQ_7SEG_CNT          : unsigned(24 downto 0);
+signal FREQ_ENCODER_CNT       : unsigned(24 downto 0);
+signal FREQ_COUNTER_CNT       : unsigned(24 downto 0);
 
-signal FREQ_7SEG_SIGNAL : Std_Logic;
-signal FREQ_ENCODER_SIGNAL : Std_Logic;
-signal FREQ_COUNTER_SIGNAL : Std_Logic;
+signal FREQ_7SEG_SIGNAL       : Std_Logic;
+signal FREQ_ENCODER_SIGNAL    : Std_Logic;
+signal FREQ_COUNTER_SIGNAL    : Std_Logic;
 
-signal disp_7seg_counter : Std_Logic_Vector(15 downto 0) := x"0000";
-signal disp_7seg_digit : Std_Logic_Vector(3 downto 0);
+signal disp_7seg_counter      : Std_Logic_Vector(15 downto 0) := x"0000";
+signal disp_7seg_digit        : Std_Logic_Vector(3 downto 0);
 
-signal digit : unsigned(1 downto 0);
+signal digit                  : unsigned(1 downto 0);
+
+signal enc_incr               : Std_Logic := '0';
+signal enc_decr               : Std_Logic := '0';
+
+signal switch_old             : Std_Logic_Vector(0 to 1);
 
 begin
 
@@ -64,9 +74,9 @@ begin
 		if FREQ_ENCODER_CNT = FREQ_ENCODER_CNT_MAX then
 			FREQ_ENCODER_CNT <= (others => '0');
 			FREQ_ENCODER_SIGNAL <= not FREQ_ENCODER_SIGNAL;
-      else
+		else
 			FREQ_ENCODER_CNT <= FREQ_ENCODER_CNT + 1;
-      end if;
+		end if;
 	end if; 
 end process;
 
@@ -85,54 +95,67 @@ begin
 	end if;
 end process;
 
-process(state,switch)
+process(clk,reset,state,switch)
 begin
-
-	case state is
-		when Idle =>
-			case switch is
-				when "01" => state <= Left1;
-				when "10" => state <= Right1;
-				when others => state <= state;
-			end case;
-      when Left1 =>
-			case switch is
-				when "00" => state <= Left2;
-				when "11" => state <= Idle;
-				when others => state <= state;
-			end case;
-      when Left2 =>
-			case switch is
-				when "01" => state <= Left1;
-				when "10" => state <= Left3;
-				when others => state <= state;
-			end case;
-		when Left3 =>
-			case switch is
-				when "00" => state <= Left2;
-				when "11" => state <= Idle;
-				when others => state <= state;
-			end case;
-      when Right1 =>
-			case switch is
-				when "00" => state <= Right2;
-				when "11" => state <= Idle;
-				when others => state <= state;
-			end case;
-      when Right2 =>
-			case switch is
-				when "10" => state <= Right1;
-				when "01" => state <= Right3;
-				when others => state <= state;
-			end case;
-      when Right3 =>
-			case switch is
-				when "00" => state <= Right2;
-				when "11" => state <= Idle;
-				when others => state <= state;
-			end case;
-      end case;
-
+	state_old <= state;
+	if (reset='0') then
+		state <= Idle;
+		disp_7seg_counter <= (others => '0');
+	elsif (clk='1' and clk'event) then
+		switch_old <= switch;
+		case state_old is
+			when Idle =>
+				case switch_old is
+					when "11" => state_new <= Idle;
+					when "01" => state_new <= Left1;
+					when "10" => state_new <= Right1;
+					when others => state_new <= Idle;
+				end case;
+			when Left1 =>
+				case switch_old is
+					when "01" => state_new <= Left1;
+					when "00" => state_new <= Left2;
+					when "11" => state_new <= Idle;
+					when others => state_new <= Idle;
+				end case;
+			when Left2 =>
+				case switch_old is
+					when "00" => state_new <= Left2;
+					when "01" => state_new <= Left1;
+					when "10" => state_new <= Left3;
+					when others => state_new <= Idle;
+				end case;
+			when Left3 =>
+				case switch_old is
+					when "10" => state_new <= Left3;
+					when "00" => state_new <= Left2;
+					when "11" => state_new <= Idle; disp_7seg_counter <= disp_7seg_counter + '1';
+					when others => state_new <= Idle;
+				end case;
+			when Right1 =>
+				case switch_old is
+					when "10" => state_new <= Right1;
+					when "00" => state_new <= Right2;
+					when "11" => state_new <= Idle;
+					when others => state_new <= Idle;
+				end case;
+			when Right2 =>
+				case switch_old is
+					when "00" => state_new <= Right2;
+					when "10" => state_new <= Right1;
+					when "01" => state_new <= Right3;
+					when others => state_new<= Idle;
+				end case;
+			when Right3 =>
+				case switch_old is
+					when "01" => state_new <= Right3;
+					when "00" => state_new <= Right2;
+					when "11" => state_new <= Idle; disp_7seg_counter <= disp_7seg_counter - '1';
+					when others => state_new <= Idle;
+				end case;
+		end case;
+	end if;
+	state <= state_new;
 end process;
 
 
@@ -149,15 +172,6 @@ process(FREQ_7SEG_SIGNAL)
 begin
 	if (FREQ_7SEG_SIGNAL='1' and FREQ_7SEG_SIGNAL'event) then
 		digit <= digit + 1;
-	end if;
-end process;
-
-process(FREQ_COUNTER_SIGNAL,reset)
-begin
-	if (reset='0') then
-		disp_7seg_counter <= (others => '0');
-	elsif (FREQ_COUNTER_SIGNAL='0' and FREQ_COUNTER_SIGNAL'event) then
-		disp_7seg_counter <= disp_7seg_counter + '1';
 	end if;
 end process;
 
