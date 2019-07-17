@@ -107,50 +107,50 @@ begin
 			when Idle =>
 				case switch_old is
 					when "11" => state_new <= Idle;
-					when "01" => state_new <= Left1;
-					when "10" => state_new <= Right1;
+					when "01" => state_new <= Left1;  disp_7seg_counter <= disp_7seg_counter + '1';
+					when "10" => state_new <= Right1; disp_7seg_counter <= disp_7seg_counter - '1';
 					when others => state_new <= Idle;
 				end case;
 			when Left1 =>
 				case switch_old is
 					when "01" => state_new <= Left1;
-					when "00" => state_new <= Left2;
-					when "11" => state_new <= Idle;
+					when "00" => state_new <= Left2; disp_7seg_counter <= disp_7seg_counter + '1';
+					when "11" => state_new <= Idle;  disp_7seg_counter <= disp_7seg_counter - '1';
 					when others => state_new <= Idle;
 				end case;
 			when Left2 =>
 				case switch_old is
 					when "00" => state_new <= Left2;
-					when "01" => state_new <= Left1;
-					when "10" => state_new <= Left3;
+					when "01" => state_new <= Left1; disp_7seg_counter <= disp_7seg_counter - '1';
+					when "10" => state_new <= Left3; disp_7seg_counter <= disp_7seg_counter + '1';
 					when others => state_new <= Idle;
 				end case;
 			when Left3 =>
 				case switch_old is
 					when "10" => state_new <= Left3;
-					when "00" => state_new <= Left2;
-					when "11" => state_new <= Idle; disp_7seg_counter <= disp_7seg_counter + '1';
+					when "00" => state_new <= Left2; disp_7seg_counter <= disp_7seg_counter - '1';
+					when "11" => state_new <= Idle;  disp_7seg_counter <= disp_7seg_counter + '1';
 					when others => state_new <= Idle;
 				end case;
 			when Right1 =>
 				case switch_old is
 					when "10" => state_new <= Right1;
-					when "00" => state_new <= Right2;
-					when "11" => state_new <= Idle;
+					when "00" => state_new <= Right2; disp_7seg_counter <= disp_7seg_counter - '1';
+					when "11" => state_new <= Idle;   disp_7seg_counter <= disp_7seg_counter + '1';
 					when others => state_new <= Idle;
 				end case;
 			when Right2 =>
 				case switch_old is
 					when "00" => state_new <= Right2;
-					when "10" => state_new <= Right1;
-					when "01" => state_new <= Right3;
+					when "10" => state_new <= Right1; disp_7seg_counter <= disp_7seg_counter + '1';
+					when "01" => state_new <= Right3; disp_7seg_counter <= disp_7seg_counter - '1';
 					when others => state_new<= Idle;
 				end case;
 			when Right3 =>
 				case switch_old is
 					when "01" => state_new <= Right3;
-					when "00" => state_new <= Right2;
-					when "11" => state_new <= Idle; disp_7seg_counter <= disp_7seg_counter - '1';
+					when "00" => state_new <= Right2; disp_7seg_counter <= disp_7seg_counter + '1';
+					when "11" => state_new <= Idle;   disp_7seg_counter <= disp_7seg_counter - '1';
 					when others => state_new <= Idle;
 				end case;
 		end case;
